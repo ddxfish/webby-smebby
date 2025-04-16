@@ -5,11 +5,12 @@ from PyQt5.QtWidgets import QApplication
 from config import Config
 from database import Database
 from checker import WebsiteChecker
-from gui import MainWindow
+from gui import MainWindow  # Import from the gui module
+import gui.methods  # Import to add methods to MainWindow class
 
 def main():
     app = QApplication(sys.argv)
-    app.setApplicationName("Website Uptime Checker")
+    app.setApplicationName("Webby")
     
     config = Config()
     database = Database(config.get('db_file'))
