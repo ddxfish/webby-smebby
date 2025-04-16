@@ -1,9 +1,95 @@
 from PyQt5.QtWidgets import QTableWidgetItem, QMessageBox, QFileDialog
 from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import QTimer
-from datetime import datetime
+from PyQt5.QtCore import QTimer, QSize
+from datetime import datetime, timedelta
 
 from gui.dialogs import AddSiteDialog, SettingsDialog, AboutDialog
+
+def format_time_since(timestamp_str):
+    """Convert timestamp to human-readable time-since with max 2 significant numbers"""
+    if not timestamp_str:
+        return ""
+    
+    try:
+        timestamp = datetime.strptime(timestamp_str, '%Y-%m-%d %H:%M:%S')
+        now = datetime.now()
+        delta = now - timestamp
+        
+        # Get total seconds
+        total_seconds = delta.total_seconds()
+        
+        # Less than a minute
+        if total_seconds < 60:
+            return f"{int(total_seconds)}s"
+        
+        # Less than an hour
+        if total_seconds < 3600:
+            minutes = int(total_seconds / 60)
+            seconds = int(total_seconds % 60)
+            return f"{minutes}m {seconds}s"
+        
+        # Less than a day
+        if total_seconds < 86400:
+            hours = int(total_seconds / 3600)
+            minutes = int((total_seconds % 3600) / 60)
+            return f"{hours}h {minutes}m"
+        
+        # Less than a month (30 days)
+        if total_seconds < 2592000:
+            days = int(total_seconds / 86400)
+            hours = int((total_seconds % 86400) / 3600)
+            return f"{days}d {hours}h"
+        
+        # Less than a year
+        if total_seconds < 31536000:
+            months = int(total_seconds / 2592000)
+            days = int((total_seconds % 2592000) / 86400)
+            return f"{months}mo {days}d"
+        
+        # More than a year
+        years = int(total_seconds / 31536000)
+        days = int((total_seconds % 31536000) / 86400)
+        return f"{years}y {days}d"
+    except:
+        return timestamp_str
+
+def get_short_status_code(status, status_code):
+    """Convert status and status_code to a 3-character code"""
+    # Handle None status
+    if status is None:
+        return 'UNK'  # Unknown status
+    
+    if status == 'OK':
+        return status_code[:3] if status_code else '200'
+    
+    # Check that status is a string before calling string methods
+    if isinstance(status, str):
+        if status.startswith('DNS'):
+            return 'DNS'
+        
+        if status.startswith('SSL'):
+            return 'SSL'
+        
+        if status.startswith('HTTP'):
+            return 'HTT'
+        
+        if status.startswith('String'):
+            return 'STR'
+        
+        if status.startswith('Timeout'):
+            return 'TMO'
+        
+        if status.startswith('Connection'):
+            return 'CON'
+    
+    if status_code and len(status_code) <= 3:
+        return status_code
+    
+    # Default case: take first 3 characters of status if it's a string
+    if isinstance(status, str) and status:
+        return status[:3].upper()
+    
+    return 'UNK'  # Default for any other case
 
 def setup_timers(self):
     self.time_timer = QTimer(self)
@@ -22,7 +108,9 @@ def update_time(self):
     
     last_failure = self.database.get_last_failure()
     if last_failure:
-        failure_text = f"{last_failure['name']} - {last_failure['status']}: {last_failure['status_code']} at {last_failure['timestamp']}"
+        # More concise status line: timestamp, site name, failure type
+        timestamp = datetime.strptime(last_failure['timestamp'], '%Y-%m-%d %H:%M:%S').strftime('%H:%M:%S')
+        failure_text = f"{timestamp} - {last_failure['name']}: {get_short_status_code(last_failure['status'], last_failure['status_code'])}"
         self.failure_label.setText(failure_text)
     else:
         self.failure_label.setText("Status: All Online")
@@ -37,14 +125,23 @@ def load_websites(self):
 def update_table_row(self, row, website):
     status_item = QTableWidgetItem()
     
-    if website.get('status') == 'OK':
-        icon = QIcon("assets/images/green.png")
-        status_text = f"{website.get('status_code', '')}"
-    else:
-        icon = QIcon("assets/images/red.png")
-        status_text = f"{website.get('status', '')} {website.get('status_code', '')}"
+    # Get 3-character status code
+    short_status = get_short_status_code(website.get('status', ''), website.get('status_code', ''))
     
-    status_item.setIcon(icon)
+    if website.get('status') == 'OK':
+        # 50% larger icon
+        icon = QIcon("assets/images/green.png")
+        status_item.setIcon(icon)
+        status_text = short_status
+    else:
+        # 50% larger icon
+        icon = QIcon("assets/images/red.png")
+        status_item.setIcon(icon)
+        status_text = short_status
+    
+    # Set larger icon size (24x24 instead of 16x16)
+    self.table.setIconSize(QSize(24, 24))
+    
     status_item.setText(status_text)
     self.table.setItem(row, 0, status_item)
     
@@ -54,11 +151,13 @@ def update_table_row(self, row, website):
     url_item = QTableWidgetItem(website.get('url', ''))
     self.table.setItem(row, 2, url_item)
     
-    last_seen = website.get('last_seen', '')
+    # Format time-since for Last Seen
+    last_seen = format_time_since(website.get('last_seen', ''))
     last_seen_item = QTableWidgetItem(last_seen)
     self.table.setItem(row, 3, last_seen_item)
     
-    last_fail = website.get('last_fail', '')
+    # Format time-since for Last Fail
+    last_fail = format_time_since(website.get('last_fail', ''))
     last_fail_item = QTableWidgetItem(last_fail)
     self.table.setItem(row, 4, last_fail_item)
 
