@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QTableWidgetItem, QMessageBox, QFileDialog
-from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import QTimer, QSize
+from PyQt5.QtGui import QIcon, QPixmap  # Added QPixmap
+from PyQt5.QtCore import QTimer, QSize, Qt  # Added Qt
 from datetime import datetime, timedelta
 
 from gui.dialogs import AddSiteDialog, SettingsDialog, AboutDialog
@@ -119,8 +119,14 @@ def update_time(self):
         timestamp = datetime.strptime(last_failure['timestamp'], '%Y-%m-%d %H:%M:%S').strftime('%H:%M:%S')
         failure_text = f"{timestamp} - {last_failure['name']}: {get_short_status_code(last_failure['status'], last_failure['status_code'])}"
         self.failure_label.setText(failure_text)
+        # Update icon to red for failures
+        status_icon_pixmap = QPixmap("assets/images/red.png")
+        self.status_icon.setPixmap(status_icon_pixmap.scaled(16, 16, Qt.KeepAspectRatio))
     else:
         self.failure_label.setText("Status: All Online")
+        # Update icon to green for all online
+        status_icon_pixmap = QPixmap("assets/images/green.png")
+        self.status_icon.setPixmap(status_icon_pixmap.scaled(16, 16, Qt.KeepAspectRatio))
 
 def update_table_times(self):
     """Update just the time columns in the table without a database query"""

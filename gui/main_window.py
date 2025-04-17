@@ -61,11 +61,11 @@ class MainWindow(QMainWindow):
         self.table = QTableWidget()
         self.table.setColumnCount(5)
         self.table.setHorizontalHeaderLabels(["Status", "Name", "URL", "Last Seen", "Last Fail"])
-        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
-        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
-        self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)  # Status
+        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)  # Name - Changed from Stretch
+        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)  # URL gets remaining space
+        self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)  # Last Seen
+        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)  # Last Fail
         
         # Hide row numbers
         self.table.verticalHeader().setVisible(False)
@@ -76,9 +76,14 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(self.table)
         
         self.status_bar = QStatusBar()
+        # Add status icon to status bar
+        self.status_icon = QLabel()
+        status_icon_pixmap = QPixmap("assets/images/green.png")
+        self.status_icon.setPixmap(status_icon_pixmap.scaled(16, 16, Qt.KeepAspectRatio))
         self.failure_label = QLabel("Status: All Online")
         self.time_label = QLabel()
         
+        self.status_bar.addWidget(self.status_icon)
         self.status_bar.addWidget(self.failure_label, 1)
         self.status_bar.addPermanentWidget(self.time_label)
         
