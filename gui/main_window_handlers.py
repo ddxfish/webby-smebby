@@ -187,11 +187,70 @@ def update_table_row(self, row, website):
     self.table.setItem(row, 4, last_fail_item)
 
 def check_websites(self):
-    """Perform the actual website checks"""
+    """Perform the actual website checks with instrumentation for counting requests"""
     websites = self.database.get_websites()
-    for i, website in enumerate(websites):
-        status, status_code = self.checker.check_website(website)
-        self.database.update_website_status(website['id'], status, status_code)
+    total_sites = len(websites)
+    
+    # Initialize counters
+    dns_checks = 0
+    ssl_checks = 0
+    http_checks = 0
+    
+    # Time tracking
+    import time
+    start_time = time.time()
+    
+    # Store original methods
+    original_check_dns = self.checker.check_dns
+    original_check_ssl = self.checker.check_ssl
+    original_check_http = self.checker.check_http
+    
+    # Create wrapped methods that count calls
+    def wrapped_check_dns(hostname):
+        nonlocal dns_checks
+        dns_checks += 1
+        return original_check_dns(hostname)
+    
+    def wrapped_check_ssl(hostname):
+        nonlocal ssl_checks
+        ssl_checks += 1
+        return original_check_ssl(hostname)
+    
+    def wrapped_check_http(url):
+        nonlocal http_checks
+        http_checks += 1
+        return original_check_http(url)
+    
+    # Replace with instrumented methods
+    self.checker.check_dns = wrapped_check_dns
+    self.checker.check_ssl = wrapped_check_ssl
+    self.checker.check_http = wrapped_check_http
+    
+    try:
+        # Perform the checks
+        for i, website in enumerate(websites):
+            status, status_code = self.checker.check_website(website)
+            self.database.update_website_status(website['id'], status, status_code)
+        
+        end_time = time.time()
+        duration = end_time - start_time
+        
+        # Print debug information
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        print(f"\n--- Website Check Report ({timestamp}) ---")
+        print(f"Total websites checked: {total_sites}")
+        print(f"Network requests made:")
+        print(f"  - DNS checks: {dns_checks}")
+        print(f"  - SSL checks: {ssl_checks}")
+        print(f"  - HTTP checks: {http_checks}")
+        print(f"Total network requests: {dns_checks + ssl_checks + http_checks}")
+        print(f"Check completed in {duration:.2f} seconds")
+        print("---------------------------------------\n")
+    finally:
+        # Restore original methods
+        self.checker.check_dns = original_check_dns
+        self.checker.check_ssl = original_check_ssl
+        self.checker.check_http = original_check_http
     
     # Reload the website data from database after checks
     self.load_websites()

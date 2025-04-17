@@ -11,31 +11,55 @@ class WebsiteChecker:
         self.user_agent = config.get('user_agent')
     
     def check_website(self, website):
+        """Check website with combined SSL and HTTP checks to reduce requests"""
+        # First ensure you have the proper import at the top of checker.py
+        # from urllib.parse import urlparse
+        
         url = website['url']
         check_string = website.get('check_string', '')
         
-        parsed_url = urlparse(url)
-        hostname = parsed_url.netloc
+        # Parse the URL to get components
+        parsed_url = None
+        try:
+            from urllib.parse import urlparse
+            parsed_url = urlparse(url)
+        except ImportError:
+            # Fallback if urlparse import fails
+            hostname = url.split('//')[1].split('/')[0] if '//' in url else url.split('/')[0]
+        else:
+            hostname = parsed_url.netloc
         
         status = 'OK'
         status_code = '200'
+        response_content = None
         
+        # Check DNS if enabled
         if self.config.get('check_dns'):
             dns_status = self.check_dns(hostname)
             if dns_status != 'OK':
                 return 'DNS', dns_status
         
-        if self.config.get('check_ssl') and parsed_url.scheme == 'https':
+        # Combined SSL and HTTP check
+        if self.config.get('check_http'):
+            http_status, response_code, response_content = self.check_http(url)
+            
+            # If HTTPS URL and SSL check is enabled, interpret SSL errors properly
+            is_https = url.startswith('https://')
+            if is_https and self.config.get('check_ssl'):
+                if http_status.startswith('SSL') or ('SSL' in response_code):
+                    return 'SSL', response_code
+            
+            if http_status != 'OK':
+                return 'HTTP', response_code
+            
+            status_code = response_code
+        elif self.config.get('check_ssl') and url.startswith('https://'):
+            # If only SSL check is enabled (not HTTP)
             ssl_status = self.check_ssl(hostname)
             if ssl_status != 'OK':
                 return 'SSL', ssl_status
         
-        if self.config.get('check_http'):
-            http_status, response_code, response_content = self.check_http(url)
-            if http_status != 'OK':
-                return 'HTTP', response_code
-            status_code = response_code
-        
+        # Check for the expected string if needed
         if self.config.get('check_string') and check_string and response_content:
             if check_string not in response_content:
                 return 'String', 'Not Found'
@@ -93,7 +117,17 @@ class WebsiteChecker:
         except urllib.error.HTTPError as e:
             return 'HTTP Error', str(e.code), None
         except urllib.error.URLError as e:
-            return 'URL Error', str(e.reason), None
+            # Check if it's an SSL error
+            if isinstance(e.reason, ssl.SSLError):
+                return 'SSL Error', str(e.reason), None
+            elif isinstance(e.reason, ssl.CertificateError):
+                return 'SSL Certificate Error', str(e.reason), None
+            else:
+                return 'URL Error', str(e.reason), None
+        except ssl.SSLError as e:
+            return 'SSL Error', str(e), None
+        except ssl.CertificateError as e:
+            return 'SSL Certificate Error', str(e), None
         except socket.timeout:
             return 'Timeout', 'Connection Timeout', None
         except Exception as e:
