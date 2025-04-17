@@ -16,6 +16,9 @@ class MainWindow(QMainWindow):
         self.database = database
         self.checker = checker
         
+        # Add cache for website data
+        self.websites_cache = []
+        
         self.setWindowTitle("Webby - Website Uptime Checker")
         self.setMinimumSize(800, 600)
         

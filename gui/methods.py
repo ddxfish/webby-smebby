@@ -4,7 +4,8 @@ from gui.main_window import MainWindow
 from gui.main_window_handlers import (
     setup_timers, update_time, load_websites, update_table_row, 
     check_websites, refresh_websites, add_site, remove_site,
-    import_from_csv, export_to_csv, show_settings, show_about
+    import_from_csv, export_to_csv, show_settings, show_about,
+    update_table_times  # Add the new method
 )
 
 # Add all the handler methods to the MainWindow class
@@ -20,3 +21,4 @@ MainWindow.import_from_csv = import_from_csv
 MainWindow.export_to_csv = export_to_csv
 MainWindow.show_settings = show_settings
 MainWindow.show_about = show_about
+MainWindow.update_table_times = update_table_times  # Add the new method

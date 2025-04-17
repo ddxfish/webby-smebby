@@ -92,15 +92,22 @@ def get_short_status_code(status, status_code):
     return 'UNK'  # Default for any other case
 
 def setup_timers(self):
+    # Timer for updating the time display - runs every second
     self.time_timer = QTimer(self)
     self.time_timer.timeout.connect(self.update_time)
     self.time_timer.start(1000)  # Update every second
     
+    # Timer for actual website checks - runs according to config
     self.check_timer = QTimer(self)
     self.check_timer.timeout.connect(self.check_websites_signal.emit)
     self.check_timer.start(self.config.get('check_frequency') * 1000)
     
     self.check_websites_signal.connect(self.check_websites)
+    
+    # Timer for updating the table UI with fresh time values - 10 times per min
+    self.update_ui_timer = QTimer(self)
+    self.update_ui_timer.timeout.connect(self.update_table_times)
+    self.update_ui_timer.start(1000)  # Every 1000ms
 
 def update_time(self):
     current_time = datetime.now().strftime('%H:%M:%S')
@@ -115,8 +122,26 @@ def update_time(self):
     else:
         self.failure_label.setText("Status: All Online")
 
+def update_table_times(self):
+    """Update just the time columns in the table without a database query"""
+    if not self.websites_cache:
+        return
+    
+    for row, website in enumerate(self.websites_cache):
+        # Update Last Seen time
+        last_seen = format_time_since(website.get('last_seen', ''))
+        last_seen_item = QTableWidgetItem(last_seen)
+        self.table.setItem(row, 3, last_seen_item)
+        
+        # Update Last Fail time
+        last_fail = format_time_since(website.get('last_fail', ''))
+        last_fail_item = QTableWidgetItem(last_fail)
+        self.table.setItem(row, 4, last_fail_item)
+
 def load_websites(self):
+    """Load websites from database and update the table and cache"""
     websites = self.database.get_websites()
+    self.websites_cache = websites  # Update the cache
     self.table.setRowCount(len(websites))
     
     for i, website in enumerate(websites):
@@ -162,14 +187,17 @@ def update_table_row(self, row, website):
     self.table.setItem(row, 4, last_fail_item)
 
 def check_websites(self):
+    """Perform the actual website checks"""
     websites = self.database.get_websites()
     for i, website in enumerate(websites):
         status, status_code = self.checker.check_website(website)
         self.database.update_website_status(website['id'], status, status_code)
     
+    # Reload the website data from database after checks
     self.load_websites()
 
 def refresh_websites(self):
+    """Manual refresh button handler"""
     self.check_websites_signal.emit()
 
 def add_site(self):
