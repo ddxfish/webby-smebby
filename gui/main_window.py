@@ -106,11 +106,15 @@ class MainWindow(QMainWindow):
         exit_action.triggered.connect(sys.exit)
         file_menu.addAction(exit_action)
         
-        # Edit menu with Add/Remove Site
+        # Edit menu with Add/Remove/Edit Site
         edit_menu = menu_bar.addMenu("Edit")
         add_site_action = QAction("Add Site", self)
         add_site_action.triggered.connect(self.add_site)
         edit_menu.addAction(add_site_action)
+        
+        edit_site_action = QAction("Edit Site", self)
+        edit_site_action.triggered.connect(self.edit_site)
+        edit_menu.addAction(edit_site_action)
         
         remove_site_action = QAction("Remove Site", self)
         remove_site_action.triggered.connect(self.remove_site)

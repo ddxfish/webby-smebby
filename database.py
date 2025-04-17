@@ -49,6 +49,18 @@ class Database:
         conn.close()
         return websites
     
+    def get_website(self, website_id):
+        """Get a single website by ID"""
+        conn = sqlite3.connect(self.db_file)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT * FROM websites WHERE id = ?', (website_id,))
+        website = cursor.fetchone()
+        
+        conn.close()
+        return dict(website) if website else None
+    
     def add_website(self, name, url, check_string=''):
         conn = sqlite3.connect(self.db_file)
         cursor = conn.cursor()
@@ -57,6 +69,20 @@ class Database:
         INSERT INTO websites (name, url, check_string)
         VALUES (?, ?, ?)
         ''', (name, url, check_string))
+        
+        conn.commit()
+        conn.close()
+    
+    def update_website(self, website_id, name, url, check_string=''):
+        """Update a website's information"""
+        conn = sqlite3.connect(self.db_file)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+        UPDATE websites 
+        SET name = ?, url = ?, check_string = ?
+        WHERE id = ?
+        ''', (name, url, check_string, website_id))
         
         conn.commit()
         conn.close()

@@ -3,7 +3,7 @@
 from gui.main_window import MainWindow
 from gui.main_window_handlers import (
     setup_timers, update_time, load_websites, update_table_row, 
-    check_websites, refresh_websites, add_site, remove_site,
+    check_websites, refresh_websites, add_site, edit_site, remove_site,
     import_from_csv, export_to_csv, show_settings, show_about,
     update_table_times
 )
@@ -16,6 +16,7 @@ MainWindow.update_table_row = update_table_row
 MainWindow.check_websites = check_websites
 MainWindow.refresh_websites = refresh_websites
 MainWindow.add_site = add_site
+MainWindow.edit_site = edit_site
 MainWindow.remove_site = remove_site
 MainWindow.import_from_csv = import_from_csv
 MainWindow.export_to_csv = export_to_csv

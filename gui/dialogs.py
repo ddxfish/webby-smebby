@@ -3,9 +3,9 @@ from PyQt5.QtWidgets import (QDialog, QLineEdit, QFormLayout, QHBoxLayout,
 from PyQt5.QtCore import Qt
 
 class AddSiteDialog(QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, website=None):
         super().__init__(parent)
-        self.setWindowTitle("Add Website")
+        self.setWindowTitle("Add Website" if website is None else "Edit Website")
         self.setMinimumWidth(400)
         
         layout = QFormLayout()
@@ -13,6 +13,12 @@ class AddSiteDialog(QDialog):
         self.name_input = QLineEdit()
         self.url_input = QLineEdit()
         self.string_input = QLineEdit()
+        
+        # Pre-fill fields if editing an existing website
+        if website:
+            self.name_input.setText(website.get('name', ''))
+            self.url_input.setText(website.get('url', ''))
+            self.string_input.setText(website.get('check_string', ''))
         
         layout.addRow("Friendly Name:", self.name_input)
         layout.addRow("URL:", self.url_input)

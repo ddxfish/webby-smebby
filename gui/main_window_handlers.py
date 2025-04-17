@@ -270,6 +270,25 @@ def add_site(self):
         else:
             QMessageBox.warning(self, "Invalid Input", "Name and URL are required.")
 
+def edit_site(self):
+    selected_rows = self.table.selectedIndexes()
+    if selected_rows:
+        row = selected_rows[0].row()
+        website_id = self.websites_cache[row]['id']
+        website = self.database.get_website(website_id)
+        
+        dialog = AddSiteDialog(self, website)
+        if dialog.exec_():
+            site_data = dialog.get_values()
+            if site_data['name'] and site_data['url']:
+                self.database.update_website(website_id, site_data['name'], site_data['url'], site_data['check_string'])
+                self.load_websites()
+                self.check_websites_signal.emit()
+            else:
+                QMessageBox.warning(self, "Invalid Input", "Name and URL are required.")
+    else:
+        QMessageBox.information(self, "Selection Required", "Please select a website to edit.")
+
 def remove_site(self):
     selected_rows = self.table.selectedIndexes()
     if selected_rows:
