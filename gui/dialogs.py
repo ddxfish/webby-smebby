@@ -66,6 +66,11 @@ class SettingsDialog(QDialog):
         self.string_check.clicked.connect(lambda: self.toggle_button(self.string_check))
         layout.addRow("Check String:", self.string_check)
         
+        # Add dark mode toggle
+        self.dark_mode = QPushButton("On" if config.get('dark_mode') else "Off")
+        self.dark_mode.clicked.connect(lambda: self.toggle_button(self.dark_mode))
+        layout.addRow("Dark Mode:", self.dark_mode)
+        
         buttons_layout = QHBoxLayout()
         self.ok_button = QPushButton("Save")
         self.cancel_button = QPushButton("Cancel")
@@ -96,6 +101,7 @@ class SettingsDialog(QDialog):
             self.config.set('check_ssl', self.ssl_check.text() == "On")
             self.config.set('check_http', self.http_check.text() == "On")
             self.config.set('check_string', self.string_check.text() == "On")
+            self.config.set('dark_mode', self.dark_mode.text() == "On")
             
             self.accept()
         except ValueError as e:

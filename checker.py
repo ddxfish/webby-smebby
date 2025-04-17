@@ -12,22 +12,16 @@ class WebsiteChecker:
     
     def check_website(self, website):
         """Check website with combined SSL and HTTP checks to reduce requests"""
-        # First ensure you have the proper import at the top of checker.py
-        # from urllib.parse import urlparse
-        
         url = website['url']
         check_string = website.get('check_string', '')
         
         # Parse the URL to get components
-        parsed_url = None
         try:
-            from urllib.parse import urlparse
             parsed_url = urlparse(url)
-        except ImportError:
-            # Fallback if urlparse import fails
-            hostname = url.split('//')[1].split('/')[0] if '//' in url else url.split('/')[0]
-        else:
             hostname = parsed_url.netloc
+        except:
+            # Fallback if urlparse fails
+            hostname = url.split('//')[1].split('/')[0] if '//' in url else url.split('/')[0]
         
         status = 'OK'
         status_code = '200'
@@ -106,6 +100,7 @@ class WebsiteChecker:
             return str(e)
     
     def check_http(self, url):
+        """Make HTTP request and capture SSL errors separately if they occur"""
         try:
             headers = {'User-Agent': self.user_agent}
             req = urllib.request.Request(url, headers=headers)
@@ -117,11 +112,10 @@ class WebsiteChecker:
         except urllib.error.HTTPError as e:
             return 'HTTP Error', str(e.code), None
         except urllib.error.URLError as e:
-            # Check if it's an SSL error
-            if isinstance(e.reason, ssl.SSLError):
+            # Check if it's an SSL-related error
+            error_str = str(e.reason).lower()
+            if 'ssl' in error_str or 'certificate' in error_str:
                 return 'SSL Error', str(e.reason), None
-            elif isinstance(e.reason, ssl.CertificateError):
-                return 'SSL Certificate Error', str(e.reason), None
             else:
                 return 'URL Error', str(e.reason), None
         except ssl.SSLError as e:

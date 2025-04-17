@@ -187,7 +187,7 @@ def update_table_row(self, row, website):
     self.table.setItem(row, 4, last_fail_item)
 
 def check_websites(self):
-    """Perform the actual website checks with instrumentation for counting requests"""
+    """Perform the actual website checks"""
     websites = self.database.get_websites()
     total_sites = len(websites)
     
@@ -311,6 +311,10 @@ def export_to_csv(self):
 def show_settings(self):
     dialog = SettingsDialog(self.config, self)
     if dialog.exec_():
+        # Apply theme if settings were changed
+        self.apply_theme()
+        
+        # Update timer with new frequency
         self.check_timer.setInterval(self.config.get('check_frequency') * 1000)
         self.check_websites_signal.emit()
 

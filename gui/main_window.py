@@ -6,6 +6,7 @@ from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 
 from gui.dialogs import AddSiteDialog, SettingsDialog, AboutDialog
+from gui.styles import LIGHT_STYLE, DARK_STYLE  # Import the styles
 
 class MainWindow(QMainWindow):
     check_websites_signal = pyqtSignal()
@@ -23,8 +24,16 @@ class MainWindow(QMainWindow):
         self.setMinimumSize(800, 600)
         
         self.init_ui()
+        self.apply_theme()  # Apply theme based on config
         self.setup_timers()
         self.load_websites()
+    
+    def apply_theme(self):
+        """Apply light or dark theme based on config setting"""
+        if self.config.get('dark_mode'):
+            self.setStyleSheet(DARK_STYLE)
+        else:
+            self.setStyleSheet(LIGHT_STYLE)
     
     def init_ui(self):
         central_widget = QWidget()
@@ -60,6 +69,9 @@ class MainWindow(QMainWindow):
         
         # Hide row numbers
         self.table.verticalHeader().setVisible(False)
+        
+        # Enable alternating row colors for better readability
+        self.table.setAlternatingRowColors(True)
         
         main_layout.addWidget(self.table)
         
