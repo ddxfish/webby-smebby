@@ -43,10 +43,19 @@ class MainWindow(QMainWindow):
         
         header_layout = QHBoxLayout()
         
-        # Logo on left side - 50% larger
+        # Status icon on far left - matches status bar icon
+        self.header_status_icon = QLabel()
+        status_icon_pixmap = QPixmap("assets/images/green.png")
+        self.header_status_icon.setPixmap(status_icon_pixmap.scaled(24, 24, Qt.KeepAspectRatio))
+        header_layout.addWidget(self.header_status_icon)
+        
+        # Add small spacing between status icon and logo
+        header_layout.addSpacing(5)
+        
+        # Logo
         logo_label = QLabel()
         logo_pixmap = QPixmap("assets/images/webby.png")
-        logo_label.setPixmap(logo_pixmap.scaled(48, 48, Qt.KeepAspectRatio))  # 32 * 1.5 = 48
+        logo_label.setPixmap(logo_pixmap.scaled(48, 48, Qt.KeepAspectRatio))
         
         # App name to right of logo
         app_title = QLabel("Webby")
@@ -61,11 +70,14 @@ class MainWindow(QMainWindow):
         self.table = QTableWidget()
         self.table.setColumnCount(5)
         self.table.setHorizontalHeaderLabels(["Status", "Name", "URL", "Last Seen", "Last Fail"])
-        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)  # Status
-        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)  # Name - Changed from Stretch
-        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)  # URL gets remaining space
-        self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)  # Last Seen
-        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)  # Last Fail
+        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
+        self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        
+        # Add padding to Name column cells (within 3-line limit)
+        self.table.setStyleSheet("QTableView::item { padding-right: 15px; }")
         
         # Hide row numbers
         self.table.verticalHeader().setVisible(False)
@@ -76,14 +88,21 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(self.table)
         
         self.status_bar = QStatusBar()
+        
+        # Add spacing before status icon
+        spacer_label = QLabel()
+        spacer_label.setFixedWidth(5)
+        self.status_bar.addWidget(spacer_label)
+        
         # Add status icon to status bar
         self.status_icon = QLabel()
         status_icon_pixmap = QPixmap("assets/images/green.png")
         self.status_icon.setPixmap(status_icon_pixmap.scaled(16, 16, Qt.KeepAspectRatio))
+        self.status_bar.addWidget(self.status_icon)
+        
         self.failure_label = QLabel("Status: All Online")
         self.time_label = QLabel()
         
-        self.status_bar.addWidget(self.status_icon)
         self.status_bar.addWidget(self.failure_label, 1)
         self.status_bar.addPermanentWidget(self.time_label)
         

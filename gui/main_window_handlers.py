@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import QTableWidgetItem, QMessageBox, QFileDialog
-from PyQt5.QtGui import QIcon, QPixmap  # Added QPixmap
-from PyQt5.QtCore import QTimer, QSize, Qt  # Added Qt
+from PyQt5.QtWidgets import QTableWidgetItem, QMessageBox, QFileDialog, QLabel
+from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtCore import QTimer, QSize, Qt
 from datetime import datetime, timedelta
 
 from gui.dialogs import AddSiteDialog, SettingsDialog, AboutDialog
@@ -109,6 +109,8 @@ def setup_timers(self):
     self.update_ui_timer.timeout.connect(self.update_table_times)
     self.update_ui_timer.start(1000)  # Every 1000ms
 
+
+
 def update_time(self):
     current_time = datetime.now().strftime('%H:%M:%S')
     self.time_label.setText(current_time)
@@ -119,14 +121,18 @@ def update_time(self):
         timestamp = datetime.strptime(last_failure['timestamp'], '%Y-%m-%d %H:%M:%S').strftime('%H:%M:%S')
         failure_text = f"{timestamp} - {last_failure['name']}: {get_short_status_code(last_failure['status'], last_failure['status_code'])}"
         self.failure_label.setText(failure_text)
-        # Update icon to red for failures
+        
+        # Update icons to red for failures (both status bar and header)
         status_icon_pixmap = QPixmap("assets/images/red.png")
         self.status_icon.setPixmap(status_icon_pixmap.scaled(16, 16, Qt.KeepAspectRatio))
+        self.header_status_icon.setPixmap(status_icon_pixmap.scaled(24, 24, Qt.KeepAspectRatio))
     else:
         self.failure_label.setText("Status: All Online")
-        # Update icon to green for all online
+        
+        # Update icons to green for all online (both status bar and header)
         status_icon_pixmap = QPixmap("assets/images/green.png")
         self.status_icon.setPixmap(status_icon_pixmap.scaled(16, 16, Qt.KeepAspectRatio))
+        self.header_status_icon.setPixmap(status_icon_pixmap.scaled(24, 24, Qt.KeepAspectRatio))
 
 def update_table_times(self):
     """Update just the time columns in the table without a database query"""
