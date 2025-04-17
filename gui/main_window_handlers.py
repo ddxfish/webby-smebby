@@ -3,6 +3,7 @@ from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import QTimer, QSize, Qt
 from datetime import datetime, timedelta
 
+
 from gui.dialogs import AddSiteDialog, SettingsDialog, AboutDialog
 
 def format_time_since(timestamp_str):
@@ -114,25 +115,31 @@ def update_time(self):
     current_time = datetime.now().strftime('%H:%M:%S')
     self.time_label.setText(current_time)
     
-    last_failure = self.database.get_last_failure()
-    if last_failure:
-        # More concise status line: timestamp, site name, failure type
-        timestamp = datetime.strptime(last_failure['timestamp'], '%Y-%m-%d %H:%M:%S').strftime('%H:%M:%S')
-        failure_text = f"{timestamp} - {last_failure['name']}: {get_short_status_code(last_failure['status'], last_failure['status_code'])}"
-        self.failure_label.setText(failure_text)
+    # Use the current status method instead of get_last_failure
+    current_status = self.database.get_current_status()
+    if current_status:
+        # Show info about the currently failing website
+        if current_status.get('last_fail'):
+            timestamp = datetime.strptime(current_status['last_fail'], '%Y-%m-%d %H:%M:%S').strftime('%H:%M:%S')
+            failure_text = f"{timestamp} - {current_status['name']}: {get_short_status_code(current_status['status'], current_status['status_code'])}"
+            self.failure_label.setText(failure_text)
+        else:
+            # Fallback if last_fail is not available
+            failure_text = f"{current_status['name']}: {get_short_status_code(current_status['status'], current_status['status_code'])}"
+            self.failure_label.setText(failure_text)
         
-        # Update icons to red for failures (both status bar and header)
+        # Update icons to red for failures
         status_icon_pixmap = QPixmap("assets/images/red.png")
         self.status_icon.setPixmap(status_icon_pixmap.scaled(16, 16, Qt.KeepAspectRatio))
         self.header_status_icon.setPixmap(status_icon_pixmap.scaled(72, 72, Qt.KeepAspectRatio))
     else:
         self.failure_label.setText("Status: All Online")
         
-        # Update icons to green for all online (both status bar and header)
+        # Update icons to green for all online
         status_icon_pixmap = QPixmap("assets/images/green.png")
         self.status_icon.setPixmap(status_icon_pixmap.scaled(16, 16, Qt.KeepAspectRatio))
-        self.header_status_icon.setPixmap(status_icon_pixmap.scaled(24, 24, Qt.KeepAspectRatio))
-
+        self.header_status_icon.setPixmap(status_icon_pixmap.scaled(72, 72, Qt.KeepAspectRatio))
+    
 def update_table_times(self):
     """Update just the time columns in the table without a database query"""
     if not self.websites_cache:

@@ -189,3 +189,31 @@ class Database:
             return False
         finally:
             conn.close()
+
+    def get_current_status(self):
+        """Get the current overall status of all websites"""
+        conn = sqlite3.connect(self.db_file)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        # Check if any website is currently failing
+        cursor.execute('SELECT id, name, url, status, status_code, last_fail FROM websites WHERE status != "OK"')
+        failing_websites = cursor.fetchall()
+        
+        if failing_websites:
+            # Get the most recently failing website
+            most_recent = None
+            latest_time = None
+            
+            for website in failing_websites:
+                if website['last_fail']:
+                    site_time = datetime.strptime(website['last_fail'], '%Y-%m-%d %H:%M:%S')
+                    if latest_time is None or site_time > latest_time:
+                        latest_time = site_time
+                        most_recent = website
+            
+            conn.close()
+            return dict(most_recent) if most_recent else dict(failing_websites[0])
+        else:
+            conn.close()
+            return None
