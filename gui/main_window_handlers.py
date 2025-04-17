@@ -110,7 +110,6 @@ def setup_timers(self):
     self.update_ui_timer.start(1000)  # Every 1000ms
 
 
-
 def update_time(self):
     current_time = datetime.now().strftime('%H:%M:%S')
     self.time_label.setText(current_time)
@@ -125,7 +124,7 @@ def update_time(self):
         # Update icons to red for failures (both status bar and header)
         status_icon_pixmap = QPixmap("assets/images/red.png")
         self.status_icon.setPixmap(status_icon_pixmap.scaled(16, 16, Qt.KeepAspectRatio))
-        self.header_status_icon.setPixmap(status_icon_pixmap.scaled(24, 24, Qt.KeepAspectRatio))
+        self.header_status_icon.setPixmap(status_icon_pixmap.scaled(72, 72, Qt.KeepAspectRatio))
     else:
         self.failure_label.setText("Status: All Online")
         
