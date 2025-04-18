@@ -27,7 +27,7 @@ Webby is a desktop application for monitoring website uptime and availability. B
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/webby.git
+   git clone https://github.com/ddxfish/webby-smebby.git
    cd webby
    ```
 
