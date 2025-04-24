@@ -5,3 +5,4 @@ websites.csv
 *.timestamp
 webby_watchdog.log
 websites.csv.timestamp
+*.db

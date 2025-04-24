@@ -60,6 +60,9 @@ def on_checking_complete(self, total, successful, duration):
     """Handle all checks complete signal"""
     self.checking_status_label.setText(f"Check completed: {successful}/{total} successful ({duration:.2f}s)")
     
+    # Generate status report file
+    self.database.generate_status_report()
+    
     # Reload websites from the database to ensure consistency
     self.load_websites()
 

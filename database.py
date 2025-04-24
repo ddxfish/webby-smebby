@@ -251,3 +251,48 @@ class Database:
         except Exception as e:
             print(f"Error backing up websites: {str(e)}")
             return False
+        
+    def verify_database(self):
+        """Verify database integrity. Returns True if database is valid, False otherwise."""
+        try:
+            conn = sqlite3.connect(self.db_file)
+            cursor = conn.cursor()
+            
+            # Check if the websites table exists
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='websites'")
+            if not cursor.fetchone():
+                print("Table 'websites' does not exist")
+                conn.close()
+                return False
+            
+            # Try to read from the websites table
+            cursor.execute('SELECT COUNT(*) FROM websites')
+            cursor.fetchone()
+            
+            # Check integrity
+            cursor.execute('PRAGMA integrity_check')
+            result = cursor.fetchone()[0]
+            
+            conn.close()
+            return result == 'ok'
+        except sqlite3.Error as e:
+            print(f"Database verification failed: {e}")
+            return False
+
+    def generate_status_report(self, output_file='/tmp/webby_status.txt'):
+        """Generate a machine-readable status report file"""
+        try:
+            websites = self.get_websites()
+            with open(output_file, 'w') as f:
+                # Write header
+                f.write("id|name|url|status|code|last_seen|last_fail\n")
+                
+                # Write each website status
+                for site in websites:
+                    f.write(f"{site.get('id', '')}|{site.get('name', '')}|{site.get('url', '')}|"
+                            f"{site.get('status', '')}|{site.get('status_code', '')}|"
+                            f"{site.get('last_seen', '')}|{site.get('last_fail', '')}\n")
+            return True
+        except Exception as e:
+            print(f"Error generating status report: {str(e)}")
+            return False

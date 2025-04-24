@@ -6,43 +6,53 @@ from PyQt5.QtWidgets import QApplication
 from config import Config
 from database import Database
 from checker import WebsiteChecker
-from gui import MainWindow  # Import from the gui module
-import gui.methods  # Import to add methods to MainWindow class
-from gui.watchdog import UIWatchdog  # Import our new watchdog
+from gui import MainWindow
+import gui.methods
+from gui.watchdog import UIWatchdog
 
 def main():
     app = QApplication(sys.argv)
     app.setApplicationName("Webby")
     
     config = Config()
-    database = Database(config.get('db_file'))
-    checker = WebsiteChecker(config)
+    db_file = config.get('db_file')
+    csv_file = 'websites.csv'  # Hardcode this for simplicity
     
+    # Create database instance
+    database = Database(db_file)
+    
+    # Verify database integrity first
+    database_valid = database.verify_database()
+    
+    # Recovery path if database is invalid
+    if not database_valid:
+        print("Database corrupted or invalid")
+        # If CSV exists, restore from it
+        if os.path.exists(csv_file):
+            print(f"Attempting recovery from {csv_file}")
+            # Re-initialize database file (removing corrupted one)
+            if os.path.exists(db_file):
+                os.remove(db_file)
+            database = Database(db_file)  # Create fresh database
+            if database.import_from_csv(csv_file):
+                print("Recovery successful")
+    
+    checker = WebsiteChecker(config)
     main_window = MainWindow(config, database, checker)
     
-    # Initialize and start the UI watchdog
+    # Initialize watchdog
     watchdog = UIWatchdog(main_window)
-    main_window.ui_watchdog = watchdog  # Store reference in main window
+    main_window.ui_watchdog = watchdog
     watchdog.start_monitoring()
+    
+    # Create backup if database is valid and we don't have one
+    websites = database.get_websites()
+    if websites and not os.path.exists(csv_file):
+        database.export_to_csv(csv_file)
     
     main_window.show()
     
-    if os.path.exists(config.get('csv_file')) and not database.get_websites():
-        database.import_from_csv(config.get('csv_file'))
-        main_window.load_websites()
-        main_window.check_websites()
-    
     sys.exit(app.exec_())
-    
-    database = Database(config.get('db_file'))
-    
-    # Add database recovery mechanism
-    if os.path.exists('websites.csv'):
-        websites = database.get_websites()
-        if not websites or os.path.getsize(config.get('db_file')) == 0:
-            print("Database empty or corrupted, restoring from backup...")
-            database.import_from_csv('websites.csv')
-            print("Restore complete")
 
 if __name__ == "__main__":
     main()
