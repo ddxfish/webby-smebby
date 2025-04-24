@@ -1,11 +1,16 @@
-# This file adds the methods from main_window_handlers.py to the MainWindow class
-
+# Updated methods.py file importing from the refactored modules
 from gui.main_window import MainWindow
-from gui.main_window_handlers import (
-    setup_timers, update_time, load_websites, update_table_row, 
-    check_websites, refresh_websites, add_site, edit_site, remove_site,
-    import_from_csv, export_to_csv, show_settings, show_about,
-    update_table_times
+
+# Import modules from refactored files
+from gui.utils import format_time_since, get_short_status_code
+from gui.ui_handlers import (
+    setup_timers, update_time, update_table_times, 
+    load_websites, update_table_row
+)
+from gui.website_handlers import (
+    check_websites, refresh_websites, add_site, edit_site, 
+    remove_site, import_from_csv, export_to_csv, 
+    show_settings, show_about
 )
 
 # Add all the handler methods to the MainWindow class
