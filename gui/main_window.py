@@ -6,7 +6,7 @@ from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 
 from gui.dialogs import AddSiteDialog, SettingsDialog, AboutDialog
-from gui.styles import LIGHT_STYLE, DARK_STYLE  # Import the styles
+from gui.styles import LIGHT_STYLE, DARK_STYLE
 
 class MainWindow(QMainWindow):
     check_websites_signal = pyqtSignal()
@@ -76,7 +76,7 @@ class MainWindow(QMainWindow):
         self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
         
-        # Add padding to Name column cells (within 3-line limit)
+        # Add padding to Name column cells
         self.table.setStyleSheet("QTableView::item { padding-right: 15px; }")
         
         # Hide row numbers
@@ -103,7 +103,11 @@ class MainWindow(QMainWindow):
         self.failure_label = QLabel("Status: All Online")
         self.time_label = QLabel()
         
+        # Add checking status label
+        self.checking_status_label = QLabel("")
+        
         self.status_bar.addWidget(self.failure_label, 1)
+        self.status_bar.addWidget(self.checking_status_label)
         self.status_bar.addPermanentWidget(self.time_label)
         
         self.setStatusBar(self.status_bar)

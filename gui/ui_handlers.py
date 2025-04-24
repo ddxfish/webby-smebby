@@ -1,9 +1,10 @@
-from PyQt5.QtWidgets import QTableWidgetItem
+from PyQt5.QtWidgets import QTableWidgetItem, QLabel
 from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import QTimer, QSize, Qt
 from datetime import datetime
 
 from gui.utils import format_time_since, get_short_status_code
+from gui.threaded_checker import ThreadedChecker
 
 def setup_timers(self):
     # Timer for updating the time display - runs every second
@@ -11,17 +12,24 @@ def setup_timers(self):
     self.time_timer.timeout.connect(self.update_time)
     self.time_timer.start(1000)  # Update every second
     
-    # Timer for actual website checks - runs according to config
+    # Timer for triggering website checks - runs according to config
     self.check_timer = QTimer(self)
-    self.check_timer.timeout.connect(self.check_websites_signal.emit)
+    self.check_timer.timeout.connect(self.check_websites)
     self.check_timer.start(self.config.get('check_frequency') * 1000)
     
-    self.check_websites_signal.connect(self.check_websites)
-    
-    # Timer for updating the table UI with fresh time values - 10 times per min
+    # Timer for updating the table UI with fresh time values
     self.update_ui_timer = QTimer(self)
     self.update_ui_timer.timeout.connect(self.update_table_times)
     self.update_ui_timer.start(1000)  # Every 1000ms
+    
+    # Initialize threaded checker
+    self.threaded_checker = ThreadedChecker(self.checker, self.config, self.database)
+    
+    # Connect signals
+    self.threaded_checker.checkingStarted.connect(self.on_checking_started)
+    self.threaded_checker.websiteChecked.connect(self.on_website_checked)
+    self.threaded_checker.websiteError.connect(self.on_website_error)
+    self.threaded_checker.checkingComplete.connect(self.on_checking_complete)
 
 def update_time(self):
     current_time = datetime.now().strftime('%H:%M:%S')
@@ -43,14 +51,14 @@ def update_time(self):
         # Update icons to red for failures
         status_icon_pixmap = QPixmap("assets/images/red.png")
         self.status_icon.setPixmap(status_icon_pixmap.scaled(16, 16, Qt.KeepAspectRatio))
-        self.header_status_icon.setPixmap(status_icon_pixmap.scaled(72, 72, Qt.KeepAspectRatio))
+        self.header_status_icon.setPixmap(status_icon_pixmap.scaled(24, 24, Qt.KeepAspectRatio))
     else:
         self.failure_label.setText("Status: All Online")
         
         # Update icons to green for all online
         status_icon_pixmap = QPixmap("assets/images/green.png")
         self.status_icon.setPixmap(status_icon_pixmap.scaled(16, 16, Qt.KeepAspectRatio))
-        self.header_status_icon.setPixmap(status_icon_pixmap.scaled(72, 72, Qt.KeepAspectRatio))
+        self.header_status_icon.setPixmap(status_icon_pixmap.scaled(24, 24, Qt.KeepAspectRatio))
 
 def update_table_times(self):
     """Update just the time columns in the table without a database query"""

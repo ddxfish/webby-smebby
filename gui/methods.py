@@ -10,7 +10,8 @@ from gui.ui_handlers import (
 from gui.website_handlers import (
     check_websites, refresh_websites, add_site, edit_site, 
     remove_site, import_from_csv, export_to_csv, 
-    show_settings, show_about
+    show_settings, show_about,
+    on_checking_started, on_website_checked, on_website_error, on_checking_complete
 )
 
 # Add all the handler methods to the MainWindow class
@@ -28,4 +29,8 @@ MainWindow.export_to_csv = export_to_csv
 MainWindow.show_settings = show_settings
 MainWindow.show_about = show_about
 MainWindow.update_table_times = update_table_times
+MainWindow.on_checking_started = on_checking_started
+MainWindow.on_website_checked = on_website_checked
+MainWindow.on_website_error = on_website_error
+MainWindow.on_checking_complete = on_checking_complete
 # The apply_theme method is already defined in main_window.py

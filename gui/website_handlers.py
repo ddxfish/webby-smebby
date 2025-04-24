@@ -5,75 +5,67 @@ from gui.dialogs import AddSiteDialog, SettingsDialog, AboutDialog
 
 def check_websites(self):
     """Perform the actual website checks"""
+    if hasattr(self, 'threaded_checker') and self.threaded_checker.is_running():
+        print("Check already in progress, skipping...")
+        return
+    
     websites = self.database.get_websites()
-    total_sites = len(websites)
+    if not websites:
+        return
     
-    # Initialize counters
-    dns_checks = 0
-    ssl_checks = 0
-    http_checks = 0
+    # Start a new check
+    self.threaded_checker.start_check(websites)
+
+def on_checking_started(self):
+    """Handle the checking started signal"""
+    self.checking_status_label.setText("Checking websites...")
     
-    # Time tracking
-    start_time = time.time()
+def on_website_checked(self, website, status, status_code):
+    """Handle individual website check completion"""
+    # Find the row in the table for this website
+    for row, cached_website in enumerate(self.websites_cache):
+        if cached_website['id'] == website['id']:
+            # Update the cache
+            cached_website['status'] = status
+            cached_website['status_code'] = status_code
+            cached_website['last_check'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            if status == 'OK':
+                cached_website['last_seen'] = cached_website['last_check']
+            else:
+                cached_website['last_fail'] = cached_website['last_check']
+            
+            # Update the table row
+            self.update_table_row(row, cached_website)
+            break
     
-    # Store original methods
-    original_check_dns = self.checker.check_dns
-    original_check_ssl = self.checker.check_ssl
-    original_check_http = self.checker.check_http
+    # Update status display
+    self.update_time()
+
+def on_website_error(self, website, error):
+    """Handle website check errors"""
+    # Similar to on_website_checked but for errors
+    for row, cached_website in enumerate(self.websites_cache):
+        if cached_website['id'] == website['id']:
+            cached_website['status'] = "Error"
+            cached_website['status_code'] = error
+            cached_website['last_check'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            cached_website['last_fail'] = cached_website['last_check']
+            
+            self.update_table_row(row, cached_website)
+            break
     
-    # Create wrapped methods that count calls
-    def wrapped_check_dns(hostname):
-        nonlocal dns_checks
-        dns_checks += 1
-        return original_check_dns(hostname)
+    self.update_time()
+
+def on_checking_complete(self, total, successful, duration):
+    """Handle all checks complete signal"""
+    self.checking_status_label.setText(f"Check completed: {successful}/{total} successful ({duration:.2f}s)")
     
-    def wrapped_check_ssl(hostname):
-        nonlocal ssl_checks
-        ssl_checks += 1
-        return original_check_ssl(hostname)
-    
-    def wrapped_check_http(url):
-        nonlocal http_checks
-        http_checks += 1
-        return original_check_http(url)
-    
-    # Replace with instrumented methods
-    self.checker.check_dns = wrapped_check_dns
-    self.checker.check_ssl = wrapped_check_ssl
-    self.checker.check_http = wrapped_check_http
-    
-    try:
-        # Perform the checks
-        for i, website in enumerate(websites):
-            status, status_code = self.checker.check_website(website)
-            self.database.update_website_status(website['id'], status, status_code)
-        
-        end_time = time.time()
-        duration = end_time - start_time
-        
-        # Print debug information
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        print(f"\n--- Website Check Report ({timestamp}) ---")
-        print(f"Total websites checked: {total_sites}")
-        print(f"Network requests made:")
-        print(f"  - DNS checks: {dns_checks}")
-        print(f"  - SSL checks: {ssl_checks}")
-        print(f"  - HTTP checks: {http_checks}")
-        print(f"Total network requests: {dns_checks + ssl_checks + http_checks}")
-        print(f"Check completed in {duration:.2f} seconds")
-        print("---------------------------------------\n")
-    finally:
-        # Restore original methods
-        self.checker.check_dns = original_check_dns
-        self.checker.check_ssl = original_check_ssl
-        self.checker.check_http = original_check_http
-    
-    # Reload the website data from database after checks
+    # Reload websites from the database to ensure consistency
     self.load_websites()
 
 def refresh_websites(self):
     """Manual refresh button handler"""
-    self.check_websites_signal.emit()
+    self.check_websites()
 
 def add_site(self):
     dialog = AddSiteDialog(self)
@@ -82,7 +74,7 @@ def add_site(self):
         if site_data['name'] and site_data['url']:
             self.database.add_website(site_data['name'], site_data['url'], site_data['check_string'])
             self.load_websites()
-            self.check_websites_signal.emit()
+            self.check_websites()
         else:
             QMessageBox.warning(self, "Invalid Input", "Name and URL are required.")
 
@@ -99,7 +91,7 @@ def edit_site(self):
             if site_data['name'] and site_data['url']:
                 self.database.update_website(website_id, site_data['name'], site_data['url'], site_data['check_string'])
                 self.load_websites()
-                self.check_websites_signal.emit()
+                self.check_websites()
             else:
                 QMessageBox.warning(self, "Invalid Input", "Name and URL are required.")
     else:
@@ -128,7 +120,7 @@ def import_from_csv(self):
     if file_path:
         if self.database.import_from_csv(file_path):
             self.load_websites()
-            self.check_websites_signal.emit()
+            self.check_websites()
             QMessageBox.information(self, "Import Successful", "Websites imported successfully.")
         else:
             QMessageBox.warning(self, "Import Failed", "Failed to import websites from CSV.")
@@ -151,7 +143,7 @@ def show_settings(self):
         
         # Update timer with new frequency
         self.check_timer.setInterval(self.config.get('check_frequency') * 1000)
-        self.check_websites_signal.emit()
+        self.check_websites()
 
 def show_about(self):
     dialog = AboutDialog(self)
