@@ -1,6 +1,5 @@
 import sys
 import os
-import logging
 from PyQt5.QtWidgets import QApplication
 
 from config import Config
@@ -16,26 +15,28 @@ def main():
     
     config = Config()
     db_file = config.get('db_file')
-    csv_file = 'websites.csv'  # Hardcode this for simplicity
+    csv_file = 'websites.csv'
+    
+    # Simple recovery logic:
+    # If database doesn't exist but CSV does, we'll import after creating database
+    csv_exists = os.path.exists(csv_file)
+    db_exists = os.path.exists(db_file)
+    should_import = False
+    
+    # Create a fresh database if needed
+    if not db_exists and csv_exists:
+        print(f"Database not found. Will recover from {csv_file}")
+        should_import = True
     
     # Create database instance
     database = Database(db_file)
     
-    # Verify database integrity first
-    database_valid = database.verify_database()
-    
-    # Recovery path if database is invalid
-    if not database_valid:
-        print("Database corrupted or invalid")
-        # If CSV exists, restore from it
-        if os.path.exists(csv_file):
-            print(f"Attempting recovery from {csv_file}")
-            # Re-initialize database file (removing corrupted one)
-            if os.path.exists(db_file):
-                os.remove(db_file)
-            database = Database(db_file)  # Create fresh database
-            if database.import_from_csv(csv_file):
-                print("Recovery successful")
+    # Import from CSV if we need to recover
+    if should_import:
+        if database.import_from_csv(csv_file):
+            print("Recovery successful")
+        else:
+            print("Recovery failed")
     
     checker = WebsiteChecker(config)
     main_window = MainWindow(config, database, checker)
@@ -45,12 +46,18 @@ def main():
     main_window.ui_watchdog = watchdog
     watchdog.start_monitoring()
     
-    # Create backup if database is valid and we don't have one
+    # Load websites and show window
+    main_window.show()
+    main_window.load_websites()
+    
+    # Create backup if database is valid and no backup exists yet
     websites = database.get_websites()
-    if websites and not os.path.exists(csv_file):
+    if websites and not csv_exists:
         database.export_to_csv(csv_file)
     
-    main_window.show()
+    # Start checking websites
+    if websites:
+        main_window.check_websites()
     
     sys.exit(app.exec_())
 

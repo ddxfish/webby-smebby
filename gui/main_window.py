@@ -91,6 +91,9 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(self.table)
         
         self.status_bar = QStatusBar()
+
+        self.status_bar.setStyleSheet("QStatusBar::item {border: none;}")  # Add this line to remove separators
+
         
         # Add spacing before status icon
         spacer_label = QLabel()

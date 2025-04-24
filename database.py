@@ -1,5 +1,6 @@
 import sqlite3
 from datetime import datetime
+import os
 
 class Database:
     def __init__(self, db_file='uptime.db'):
@@ -254,6 +255,11 @@ class Database:
         
     def verify_database(self):
         """Verify database integrity. Returns True if database is valid, False otherwise."""
+        # Check if file exists and has content
+        if not os.path.exists(self.db_file) or os.path.getsize(self.db_file) == 0:
+            print(f"Database file missing or empty: {self.db_file}")
+            return False
+            
         try:
             conn = sqlite3.connect(self.db_file)
             cursor = conn.cursor()
