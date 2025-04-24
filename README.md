@@ -2,6 +2,9 @@
 
 Webby is a desktop application for monitoring website uptime and availability. Built with PyQt5, it provides a clean, intuitive interface to track the status of multiple websites simultaneously. Webby performs comprehensive health checks including DNS resolution, SSL certificate validation, HTTP response codes, and content validation, allowing you to quickly identify and respond to outages.
 
+![image](https://github.com/user-attachments/assets/5f06cc62-b307-49f7-810d-46676efc846f)
+
+
 ## Features
 
 - **Real-time monitoring** of website availability and uptime
@@ -24,7 +27,7 @@ Webby is a desktop application for monitoring website uptime and availability. B
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/webby.git
+   git clone https://github.com/ddxfish/webby-smebby.git
    cd webby
    ```
 
