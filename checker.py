@@ -62,9 +62,10 @@ class WebsiteChecker:
     
     def check_dns(self, hostname):
         try:
-            # Clear DNS cache by using a resolver with no cache
+            # Create a fresh resolver - don't mess with the cache
             resolver = dns.resolver.Resolver()
-            resolver.cache = None
+            
+            resolver.nameservers = ['8.8.8.8', '8.8.4.4']
             
             resolver.resolve(hostname)
             return 'OK'
