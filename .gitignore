@@ -1,3 +1,7 @@
 *.pyc
 uptime.db
 websites.csv
+*.log
+*.timestamp
+webby_watchdog.log
+websites.csv.timestamp

@@ -34,3 +34,24 @@ MainWindow.on_website_checked = on_website_checked
 MainWindow.on_website_error = on_website_error
 MainWindow.on_checking_complete = on_checking_complete
 # The apply_theme method is already defined in main_window.py
+
+def emergency_save(self):
+    """Save critical state during emergency shutdown."""
+    try:
+        from datetime import datetime
+        
+        # Try to gracefully terminate any running checks
+        if hasattr(self, 'threaded_checker') and self.threaded_checker.is_running():
+            self.threaded_checker.stop_check()
+        
+        # Export websites list if possible
+        emergency_csv = "emergency_backup.csv"
+        self.database.export_to_csv(emergency_csv)
+        
+        # Write a status file
+        with open("webby_emergency.log", "w") as f:
+            f.write(f"Emergency shutdown occurred at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write(f"Last status: {self.failure_label.text()}\n")
+    except Exception as e:
+        import logging
+        logging.critical(f"Failed during emergency save: {str(e)}")

@@ -31,6 +31,19 @@ def setup_timers(self):
     self.threaded_checker.websiteError.connect(self.on_website_error)
     self.threaded_checker.checkingComplete.connect(self.on_checking_complete)
 
+    # Timer for pruning old logs - runs daily
+    self.prune_timer = QTimer(self)
+    self.prune_timer.timeout.connect(lambda: self.database.prune_old_logs(30))
+    self.prune_timer.start(24 * 60 * 60 * 1000)  # Run once per day
+
+    # Timer for daily website backup - runs once per day
+    self.backup_timer = QTimer(self)
+    self.backup_timer.timeout.connect(lambda: self.database.backup_websites('websites.csv'))
+    self.backup_timer.start(24 * 60 * 60 * 1000)  # Run once per day
+    
+    # To ensure a backup at startup too:
+    self.database.backup_websites('websites.csv')
+
 def update_time(self):
     current_time = datetime.now().strftime('%H:%M:%S')
     self.time_label.setText(current_time)
@@ -121,3 +134,4 @@ def update_table_row(self, row, website):
     last_fail = format_time_since(website.get('last_fail', ''))
     last_fail_item = QTableWidgetItem(last_fail)
     self.table.setItem(row, 4, last_fail_item)
+

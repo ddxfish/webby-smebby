@@ -79,14 +79,16 @@ class WebsiteChecker:
             return str(e)
     
     def check_ssl(self, hostname):
+        sock = None
+        ssock = None
         try:
             context = ssl.create_default_context()
-            with socket.create_connection((hostname, 443)) as sock:
-                with context.wrap_socket(sock, server_hostname=hostname) as ssock:
-                    cert = ssock.getpeercert()
-                    if cert:
-                        return 'OK'
-                    return 'Invalid Certificate'
+            sock = socket.create_connection((hostname, 443))
+            ssock = context.wrap_socket(sock, server_hostname=hostname)
+            cert = ssock.getpeercert()
+            if cert:
+                return 'OK'
+            return 'Invalid Certificate'
         except ssl.SSLCertVerificationError:
             return 'Certificate Verification Error'
         except ssl.SSLError as e:
@@ -99,9 +101,22 @@ class WebsiteChecker:
             return 'Connection Refused'
         except Exception as e:
             return str(e)
+        finally:
+            # Clean up resources
+            if ssock:
+                try:
+                    ssock.close()
+                except:
+                    pass
+            if sock:
+                try:
+                    sock.close()
+                except:
+                    pass
     
     def check_http(self, url):
         """Make HTTP request and capture SSL errors separately if they occur"""
+        response = None
         try:
             headers = {'User-Agent': self.user_agent}
             req = urllib.request.Request(url, headers=headers)
@@ -127,3 +142,10 @@ class WebsiteChecker:
             return 'Timeout', 'Connection Timeout', None
         except Exception as e:
             return 'Error', str(e), None
+        finally:
+            # Close the response if it exists
+            if response:
+                try:
+                    response.close()
+                except:
+                    pass

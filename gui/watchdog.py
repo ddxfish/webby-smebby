@@ -2,23 +2,15 @@ import time
 import logging
 import sys
 import os
-from PyQt5.QtCore import QObject, QTimer, pyqtSignal, QMetaObject, Qt
+from PyQt5.QtCore import QObject, QTimer, pyqtSignal, Qt
 from PyQt5.QtWidgets import QApplication
 from datetime import datetime
 
 class UIWatchdog(QObject):
     ui_frozen_signal = pyqtSignal()
+    ping_signal = pyqtSignal()  # New signal for ping
     
     def __init__(self, main_window, threshold=10, check_interval=5000, ping_interval=2000):
-        """
-        Initialize the UI watchdog.
-        
-        Args:
-            main_window: The main window to monitor
-            threshold: Number of seconds before UI is considered frozen
-            check_interval: How often to check UI responsiveness (ms)
-            ping_interval: How often to ping the UI thread (ms)
-        """
         super().__init__()
         self.main_window = main_window
         self.threshold = threshold
@@ -31,16 +23,26 @@ class UIWatchdog(QObject):
         # Connect signals
         self.ui_frozen_signal.connect(self.handle_frozen_ui)
         
-        # Setup logging
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-            filename='webby_watchdog.log',
-            filemode='a'
+        # Setup logging with rotation
+        from logging.handlers import RotatingFileHandler
+        log_handler = RotatingFileHandler(
+            'webby_watchdog.log',
+            maxBytes=10*1024*1024,  # 10MB
+            backupCount=5  # Keep 5 backup files
         )
+        log_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        log_handler.setFormatter(log_formatter)
+        
+        logger = logging.getLogger('webby_watchdog')
+        logger.setLevel(logging.INFO)
+        logger.addHandler(log_handler)
+        self.logger = logger
         
     def start_monitoring(self):
         """Start the UI monitoring process."""
+        # Connect ping signal to pong response method
+        self.ping_signal.connect(self.main_window.pong_response)
+        
         # Set up timer to check UI responsiveness
         self.check_timer = QTimer()
         self.check_timer.timeout.connect(self.check_ui_responsive)
@@ -55,9 +57,8 @@ class UIWatchdog(QObject):
         
     def ping_main_thread(self):
         """Send a ping to the main thread."""
-        # Send to main thread
-        QMetaObject.invokeMethod(self.main_window, "pong_response", 
-                                Qt.QueuedConnection)
+        # Emit the ping signal instead of invoking the method directly
+        self.ping_signal.emit()
     
     def record_pong(self):
         """Record that a pong response was received."""

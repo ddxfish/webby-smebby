@@ -8,6 +8,9 @@ from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 from gui.dialogs import AddSiteDialog, SettingsDialog, AboutDialog
 from gui.styles import LIGHT_STYLE, DARK_STYLE
 
+from PyQt5.QtCore import pyqtSlot  # Add this import
+
+
 class MainWindow(QMainWindow):
     check_websites_signal = pyqtSignal()
     
@@ -162,3 +165,9 @@ class MainWindow(QMainWindow):
         about_action = QAction("About", self)
         about_action.triggered.connect(self.show_about)
         about_menu.addAction(about_action)
+
+    @pyqtSlot()  # Mark as a slot
+    def pong_response(self):
+        """Respond to ping from watchdog to indicate UI is responsive."""
+        if hasattr(self, 'ui_watchdog'):
+            self.ui_watchdog.record_pong()

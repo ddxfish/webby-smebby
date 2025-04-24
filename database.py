@@ -217,3 +217,37 @@ class Database:
         else:
             conn.close()
             return None
+
+    def prune_old_logs(self, days=30):
+        """Delete logs older than specified days"""
+        conn = sqlite3.connect(self.db_file)
+        cursor = conn.cursor()
+        
+        # Calculate the date threshold
+        from datetime import datetime, timedelta
+        threshold_date = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d %H:%M:%S')
+        
+        try:
+            cursor.execute('DELETE FROM logs WHERE timestamp < ?', (threshold_date,))
+            deleted_count = cursor.rowcount
+            conn.commit()
+            return deleted_count
+        except Exception as e:
+            print(f"Error pruning logs: {str(e)}")
+            return 0
+        finally:
+            conn.close()
+
+
+    def backup_websites(self, backup_file='websites.csv'):
+        """Backup all websites to CSV file for disaster recovery"""
+        try:
+            success = self.export_to_csv(backup_file)
+            if success:
+                # Create a timestamp file to record last successful backup
+                with open(f"{backup_file}.timestamp", "w") as f:
+                    f.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+            return success
+        except Exception as e:
+            print(f"Error backing up websites: {str(e)}")
+            return False
