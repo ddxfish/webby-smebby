@@ -1,9 +1,8 @@
 # Webby - Website Uptime Checker
 
-Webby is a desktop application for monitoring website uptime and availability. Built with PyQt5, it provides a clean, intuitive interface to track the status of multiple websites simultaneously. Webby performs comprehensive health checks including DNS resolution, SSL certificate validation, HTTP response codes, and content validation, allowing you to quickly identify and respond to outages.
+Webby is a desktop application for monitoring website uptime and availability. Built with PyQt5, it provides a straightforward interface to track the status of multiple websites. It performs basic health checks including DNS resolution, SSL certificate validation, HTTP response codes, and content validation, helping you identify potential website issues. While suitable for digital signage and personal monitoring, it's not intended to replace dedicated enterprise-level uptime services.
 
 ![image](https://github.com/user-attachments/assets/5f06cc62-b307-49f7-810d-46676efc846f)
-
 
 ## Features
 
@@ -15,6 +14,10 @@ Webby is a desktop application for monitoring website uptime and availability. B
 - **Customizable check frequency** to balance monitoring needs with system resources
 - **Dark/light theme support** for comfortable viewing in any environment
 - **Low resource footprint** suitable for continuous background operation
+- **Watchdog monitoring** to ensure application stability and prevent UI freezes
+- **Graceful error recovery** with emergency state saving
+- **Threaded website checking** for improved performance and reliability
+- **Auto-pruning of old logs** to maintain database efficiency
 
 ## Installation
 
@@ -64,7 +67,7 @@ Webby is a desktop application for monitoring website uptime and availability. B
 A: By default, Webby checks websites every 300 seconds (5 minutes). This can be adjusted in the settings.
 
 **Q: Does Webby keep a history of status changes?**  
-A: Yes, all status changes are logged to an SQLite database, including timestamps, status codes, and error details.
+A: Yes, all status changes are logged to an SQLite database, including timestamps, status codes, and error details. The application automatically prunes logs older than 30 days to maintain database efficiency.
 
 **Q: How does Webby minimize network overhead?**  
 A: Webby uses a tiered checking system, first attempting DNS resolution, then SSL validation, and only then making HTTP requests. This prevents unnecessary network traffic for sites with fundamental connectivity issues.
@@ -73,7 +76,25 @@ A: Webby uses a tiered checking system, first attempting DNS resolution, then SS
 A: Yes, Webby is designed to be lightweight and can run continuously in the background, alerting you when issues arise.
 
 **Q: How does Webby handle slow-responding websites?**  
-A: Connection timeouts are set to 10 seconds by default to accommodate slower websites while preventing the application from hanging indefinitely.
+A: Connection timeouts are set to 10 seconds by default for HTTP connections. The overall check timeout is dynamically set to half of the configured check frequency (with a maximum of 30 seconds) to prevent checks from overlapping while still allowing for slower websites.
+
+**Q: What happens if a website check gets stuck?**  
+A: Each website check runs in its own thread with a timeout mechanism. If a check exceeds the timeout limit, it's marked as failed with a "Timeout" status without affecting other checks or freezing the application.
+
+**Q: What is the UI watchdog feature?**  
+A: Webby includes a basic UI watchdog that monitors application responsiveness. If the UI becomes unresponsive, the watchdog tries to recover it or perform a clean shutdown. This helps reduce the chance of completely frozen interfaces but isn't foolproof - occasional manual restarts may still be necessary with prolonged use.
+
+**Q: Does Webby attempt to protect against data loss?**  
+A: Webby attempts to save your website list during unexpected shutdowns, but this emergency feature is a best-effort mechanism and not guaranteed to work in all crash scenarios. Regular manual exports are recommended for important configurations.
+
+**Q: How does the threaded checking system improve reliability?**  
+A: By running each website check in its own thread, a single slow or problematic website won't block checks of other websites. This architecture also allows for graceful cancellation of ongoing checks when needed, such as during application shutdown.
+
+**Q: Can I run Webby with a launcher for improved reliability?**  
+A: Webby includes a basic launcher script that can restart the application if it crashes, which helps with reliability for a desktop tool. However, it lacks features of professional monitoring services like redundant checking from multiple locations, SMS alerts, or guaranteed uptime.
+
+**Q: How does Webby compare to professional uptime monitoring services?**  
+A: Webby is a lightweight desktop tool suitable for basic monitoring needs or digital signage displays. Professional services offer geographical redundancy, SLA guarantees, advanced alerting systems, and historical reporting that Webby doesn't provide. Choose Webby for personal projects or internal status boards, but consider dedicated services for business-critical websites.
 
 ## License
 
